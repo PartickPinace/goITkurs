@@ -260,12 +260,12 @@ def create_record():
     while True:
         birthday_input = input("Podaj datę urodzenia (YYYY-MM-DD) lub wciśnij Enter, aby pominąć: ")
         if not birthday_input:
-            break  # Użytkownik nie chce podawać daty urodzenia
+            break
         try:
             birthday = Birthday(birthday_input)
-            break  # Poprawna data urodzenia, wychodzimy z pętli
+            break
         except ValueError as e:
-            print(e)  # Informujemy użytkownika o błędzie
+            print(e)
 
     record = Record(name, birthday)
 
@@ -273,21 +273,21 @@ def create_record():
         try:
             phone_input = input("Podaj numer telefonu (lub wciśnij Enter, aby zakończyć dodawanie numerów): ")
             if not phone_input:
-                break  # Użytkownik nie chce dodawać więcej numerów telefonów
+                break
             phone = Phone(phone_input)
             record.add_phone(phone)
         except ValueError as e:
-            print(e)  # Informujemy użytkownika o błędzie i kontynuujemy pętlę
+            print(e)
 
     while True:
         try:
             email_input = input("Podaj adres email (lub wciśnij Enter, aby zakończyć dodawanie adresów email): ")
             if not email_input:
-                break  # Użytkownik nie chce dodawać więcej adresów email
+                break
             email = Email(email_input)
             record.add_email(email)
         except ValueError as e:
-            print(e)  # Informujemy użytkownika o błędzie i kontynuujemy pętlę
+            print(e)
 
     return record
 
