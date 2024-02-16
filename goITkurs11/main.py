@@ -1,6 +1,7 @@
 from collections import UserDict
 import re
 import pickle
+from datetime import datetime, timedelta
 
 class Field:
     """Base class for entry fields."""
@@ -37,12 +38,30 @@ class Email(Field):
         pattern = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
         return pattern.match(value) is not None
 
+class Birthday(Field):
+    """Class for birthday with validation."""
+    def __init__(self, value):
+        if not self.validate_birthday(value):
+            raise ValueError("Niepoprawna data urodzenia")
+        super().__init__(value)
+
+    @staticmethod
+    def validate_birthday(value):
+        """Checks if the birthday is valid."""
+        try:
+            datetime.strptime(value, "%Y-%m-%d")
+            return True
+        except ValueError:
+            return False
+
+
 class Record:
     """Class for an entry in the address book."""
-    def __init__(self, name: Name):
+    def __init__(self, name: Name, birthday: Birthday = None):
         self.name = name
         self.phones = []
         self.emails = []
+        self.birthday = birthday
 
     def add_phone(self, phone: Phone):
         """Adds a phone number."""
@@ -74,11 +93,25 @@ class Record:
         """Changes the first and last name."""
         self.name = new_name
 
+    def days_to_birthday(self):
+        """Returns the number of days to the next birthday."""
+        if not self.birthday or not self.birthday.value:
+            return "Brak daty urodzenia"
+        today = datetime.now()
+        bday = datetime.strptime(self.birthday.value, "%Y-%m-%d")
+        next_birthday = bday.replace(year=today.year)
+        if today > next_birthday:
+            next_birthday = next_birthday.replace(year=today.year + 1)
+        return (next_birthday - today).days
+
     def __str__(self):
         """Returns a string representation of the entry."""
         phones = ', '.join(phone.value for phone in self.phones)
         emails = ', '.join(email.value for email in self.emails)
-        return f"Imię i nazwisko: {self.name.value}, Telefony: {phones}, Email: {emails}"
+        birthday_str = f", Urodziny: {self.birthday.value}" if self.birthday else ""
+        days_to_bday_str = f", Dni do urodzin: {self.days_to_birthday()}" if self.birthday else ""
+        return f"Imię i nazwisko: {self.name.value}, " \
+               f"Telefony: {phones}, Email: {emails}{birthday_str}{days_to_bday_str}"
 
 class AddressBook(UserDict):
     """Class for the address book."""
@@ -120,6 +153,19 @@ class AddressBook(UserDict):
         for name, record in self.data.items():
             print(record)
 
+    def __iter__(self):
+        """Returns an iterator over the address book records."""
+        self.current = 0
+        return self
+
+    def __next__(self):
+        if self.current < len(self.data):
+            records = list(self.data.values())[self.current:self.current+5]
+            self.current += 5
+            return records
+        else:
+            raise StopIteration
+
 
 def edit_record(book):
     """Edits an existing record in the address book."""
@@ -160,22 +206,26 @@ def edit_record(book):
         print("Wpisu nie znaleziono.")
 
 def save_address_book(book, filename='address_book.pkl'):
-    """Saves the address book to a file."""
-    with open(filename, 'wb') as file:
-        pickle.dump(book.data, file)
-    print("Zapisano książkę adresową.")
+    try:
+        with open(filename, 'wb') as file:
+            pickle.dump(book.data, file)
+        print("Zapisano książkę adresową.")
+    except Exception as e:
+        print(f"Błąd przy zapisie książki adresowej: {e}")
 
 def load_address_book(filename='address_book.pkl'):
-    """Restores the address book from a file."""
     try:
         with open(filename, 'rb') as file:
             data = pickle.load(file)
-            book = AddressBook()
-            book.data = data
-            print("Przywrócono książkę adresową.")
-            return book
+        book = AddressBook()
+        book.data = data
+        print("Przywrócono książkę adresową.")
+        return book
     except FileNotFoundError:
         print("Plik nie istnieje, tworzenie nowej książki adresowej.")
+        return AddressBook()
+    except Exception as e:
+        print(f"Błąd przy ładowaniu książki adresowej: {e}")
         return AddressBook()
 
 def input_phone():
@@ -200,41 +250,52 @@ def input_email():
         except ValueError as e:
             print(e)
 
+
 def create_record():
     """Creates an entry in the address book based on user input."""
+    name_input = input("Podaj imię i nazwisko: ")
+    name = Name(name_input)
+
+    birthday = None
     while True:
-        name_input = input("Podaj imię i nazwisko: ")
-        if name_input.strip():
-            name = Name(name_input)
-            break
-        else:
-            print("Pole imię i nazwisko jest wymagane.")
-    record = Record(name)
+        birthday_input = input("Podaj datę urodzenia (YYYY-MM-DD) lub wciśnij Enter, aby pominąć: ")
+        if not birthday_input:
+            break  # Użytkownik nie chce podawać daty urodzenia
+        try:
+            birthday = Birthday(birthday_input)
+            break  # Poprawna data urodzenia, wychodzimy z pętli
+        except ValueError as e:
+            print(e)  # Informujemy użytkownika o błędzie
+
+    record = Record(name, birthday)
+
     while True:
-        phone = input_phone()
-        if phone:
+        try:
+            phone_input = input("Podaj numer telefonu (lub wciśnij Enter, aby zakończyć dodawanie numerów): ")
+            if not phone_input:
+                break  # Użytkownik nie chce dodawać więcej numerów telefonów
+            phone = Phone(phone_input)
             record.add_phone(phone)
-            decision = input("Dodać kolejny numer? (tak/nie) ").lower()
-            if decision not in ["tak", "t"]:
-                break
-        else:
-            break
+        except ValueError as e:
+            print(e)  # Informujemy użytkownika o błędzie i kontynuujemy pętlę
+
     while True:
-        email = input_email()
-        if email:
+        try:
+            email_input = input("Podaj adres email (lub wciśnij Enter, aby zakończyć dodawanie adresów email): ")
+            if not email_input:
+                break  # Użytkownik nie chce dodawać więcej adresów email
+            email = Email(email_input)
             record.add_email(email)
-            decision = input("Dodać kolejny email? (tak/nie) ").lower()
-            if decision not in ["tak", "t"]:
-                break
-        else:
-            break
+        except ValueError as e:
+            print(e)  # Informujemy użytkownika o błędzie i kontynuujemy pętlę
+
     return record
 
 def main():
     """The main app function"""
     book = load_address_book()
     while True:
-        action = input("Wybierz akcję: dodaj (d), znajdź (z), usuń (u), edytuj (e), pokaż wszystkie (p) koniec (q): ")
+        action = input("Wybierz akcję: dodaj (d), znajdź (z), usuń (u), edytuj (e), pokaż wszystkie (p), koniec (q): ")
         if action == "dodaj" or action == "d":
             record = create_record()
             book.add_record(record)
@@ -249,7 +310,17 @@ def main():
         elif action in ["edytuj", "edycja", "e"]:
             edit_record(book)
         elif action in ["pokaż wszystkie", "pokaż", "pokaz", "p"]:
-            book.show_all_records()
+            iterator = iter(book)
+            while True:
+                try:
+                    records = next(iterator)
+                    for record in records:
+                        print(record)
+                    if input("Naciśnij Enter, aby kontynuować lub wpisz 'q' aby zakończyć: ") == 'q':
+                        break
+                except StopIteration:
+                    print("Koniec listy.")
+                    break
         elif action in ["koniec", "q"]:
             save_address_book(book)
             break
