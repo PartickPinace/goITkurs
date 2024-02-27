@@ -139,11 +139,12 @@ class AddressBook(UserDict):
 
     def delete_record(self, name):
         """Deletes a record by name."""
+        name = name.strip()
         if name in self.data:
             del self.data[name]
-            print(f"Usunięto wpis: {name}.")
+            print(f"Usunięto wpis dla: {name}.")
         else:
-            print(f"Wpis o nazwie {name} nie istnieje.")
+            print(f"Wpis dla: {name} nie istnieje.")
 
     def show_all_records(self):
         """Displays all entries in the address book."""
@@ -304,7 +305,7 @@ def main():
             found = book.find_record(search)
             for record in found:
                 print(record)
-        elif action in ['usuń', 'usun' 'u']:
+        elif action in ['usuń', 'usun', 'u']:
             name = input("Podaj imię i nazwisko do usunięcia: ")
             book.delete_record(name)
         elif action in ['edytuj', 'edycja', 'e']:
