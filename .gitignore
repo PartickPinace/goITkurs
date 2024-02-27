@@ -6,6 +6,15 @@ __pycache__/
 # C extensions
 *.so
 
+# Ignorowane foldery projektu
+/goITkurs/
+/goITkurs1/clean_folder/
+/goITkurs11/
+/goITkurs2/
+/goITkurs3/
+/goITkurs4/
+
+
 # Distribution / packaging
 .Python
 build/
