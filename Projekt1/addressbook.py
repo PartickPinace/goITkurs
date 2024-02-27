@@ -175,11 +175,13 @@ def edit_record(book):
         record = book.data[name_to_edit]
         print(f"Edytowanie: {name_to_edit}.")
 
+        # name and surname edit
         new_name_input = input("Podaj imię i nazwisko (wciśnij Enter żeby zachować obecne): ")
         if new_name_input.strip():
             record.edit_name(Name(new_name_input))
             print("Zaktualizowano imię i nazwisko.")
 
+        # phone number edit
         if record.phones:
             print("Obecne numery telefonów: ")
             for idx, phone in enumerate(record.phones, start=1):
@@ -201,6 +203,29 @@ def edit_record(book):
                 print("Pomięto edycję numeru.")
         else:
             print("Brak numerów telefonu.")
+
+        # e-mail edit
+        if record.emails:
+            print("Obecne adresy e-mail: ")
+            for idx, email in enumerate(record.emails, start=1):
+                print(f"{idx}. {email.value}")
+            email_to_edit = input("Wprowadź indeks adresu e-mail, który chcesz edytować "
+                                  "(wciśnij Enter, aby zachować obecny): ")
+            if email_to_edit.isdigit():
+                idx = int(email_to_edit) - 1
+                if 0 <= idx < len(record.emails):
+                    new_email = input("Podaj nowy adres e-mail: ")
+                    if new_email.strip():
+                        record.edit_email(record.emails[idx], Email(new_email))  # Zakładając, że istnieje metoda edit_email
+                        print("Adres e-mail zaktualizowany.")
+                    else:
+                        print("Nie dokonano zmian.")
+                else:
+                    print("Niepoprawny indeks adresu e-mail.")
+            else:
+                print("Pomięto edycję adresu e-mail.")
+        else:
+            print("Brak adresów e-mail.")
 
         print("Wpis zaktualizowany.")
     else:
