@@ -183,7 +183,7 @@ class AddressBook(UserDict):
             record_id_to_delete = int(input("Podaj ID rekordu, który chcesz usunąć: "))
             if record_id_to_delete in self.data:
                 del self.data[record_id_to_delete]
-                self.free_ids.add(record_id_to_delete)  # Dodaj ID z powrotem do puli wolnych ID
+                self.free_ids.add(record_id_to_delete)  # Add the ID back to the free ID pool
                 print(f"Usunięto rekord o ID: {record_id_to_delete}.")
             else:
                 print("Nie znaleziono rekordu o podanym ID.")
