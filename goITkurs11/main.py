@@ -296,20 +296,20 @@ def main():
     book = load_address_book()
     while True:
         action = input("Wybierz akcję: dodaj (d), znajdź (z), usuń (u), edytuj (e), pokaż wszystkie (p), koniec (q): ")
-        if action == "dodaj" or action == "d":
+        if action in ['dodaj', 'd']:
             record = create_record()
             book.add_record(record)
-        elif action == 'znajdź' or action == "z":
+        elif action in ['znajdź', 'znajdz', 'z']:
             search = input("Wpisz szukaną frazę: ")
             found = book.find_record(search)
             for record in found:
                 print(record)
-        elif action == 'usuń' or action == "u":
+        elif action in ['usuń', 'usun' 'u']:
             name = input("Podaj imię i nazwisko do usunięcia: ")
             book.delete_record(name)
-        elif action in ["edytuj", "edycja", "e"]:
+        elif action in ['edytuj', 'edycja', 'e']:
             edit_record(book)
-        elif action in ["pokaż wszystkie", "pokaż", "pokaz", "p"]:
+        elif action in ['pokaż wszystkie', 'pokaż', 'pokaz', 'p']:
             iterator = iter(book)
             while True:
                 try:
