@@ -216,7 +216,7 @@ def edit_record(book):
                 if 0 <= idx < len(record.emails):
                     new_email = input("Podaj nowy adres e-mail: ")
                     if new_email.strip():
-                        record.edit_email(record.emails[idx], Email(new_email))  # Zakładając, że istnieje metoda edit_email
+                        record.edit_email(record.emails[idx], Email(new_email))
                         print("Adres e-mail zaktualizowany.")
                     else:
                         print("Nie dokonano zmian.")
