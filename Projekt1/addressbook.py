@@ -322,7 +322,7 @@ def main():
     book = load_address_book()
     while True:
         action = input("Wybierz akcję: dodaj (d), znajdź (z), usuń (u), edytuj (e), pokaż wszystkie (p), koniec (q): ")
-        if action in ['dodaj', 'd']:
+        if action in ['dodaj', 'add', 'd']:
             record = create_record()
             book.add_record(record)
         elif action in ['znajdź', 'znajdz', 'z']:
