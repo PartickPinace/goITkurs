@@ -9,11 +9,9 @@ class Field:
         self.value = value
 
 class Name(Field):
-    """Class for first and last name."""
     pass
 
 class Phone(Field):
-    """Class for phone number with validation."""
     def __init__(self, value):
         if not self.validate_phone(value):
             raise ValueError("Niepoprawny numer telefonu")
@@ -21,12 +19,10 @@ class Phone(Field):
 
     @staticmethod
     def validate_phone(value):
-        """Checks if the phone number is valid (9 digits, format 123456789)."""
         pattern = re.compile(r"^\d{9}$")
         return pattern.match(value) is not None
 
 class Email(Field):
-    """Class for email address with validation."""
     def __init__(self, value):
         if not self.validate_email(value):
             raise ValueError("Niepoprawny adres email")
@@ -34,12 +30,10 @@ class Email(Field):
 
     @staticmethod
     def validate_email(value):
-        """Checks if the email is valid."""
         pattern = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
         return pattern.match(value) is not None
 
 class Birthday(Field):
-    """Class for birthday with validation."""
     def __init__(self, value):
         if not self.validate_birthday(value):
             raise ValueError("Niepoprawna data urodzenia")
@@ -47,17 +41,15 @@ class Birthday(Field):
 
     @staticmethod
     def validate_birthday(value):
-        """Checks if the birthday is valid."""
         try:
             datetime.strptime(value, "%Y-%m-%d")
             return True
         except ValueError:
             return False
 
-
 class Record:
-    """Class for an entry in the address book."""
     def __init__(self, name: Name, birthday: Birthday = None):
+        self.id = None  # The ID will be assigned by AddressBook
         self.name = name
         self.phones = []
         self.emails = []
@@ -105,20 +97,48 @@ class Record:
         return (next_birthday - today).days
 
     def __str__(self):
-        """Returns a string representation of the entry."""
+        """Returns a string representation of the entry, including the ID."""
         phones = ', '.join(phone.value for phone in self.phones)
         emails = ', '.join(email.value for email in self.emails)
         birthday_str = f", Urodziny: {self.birthday.value}" if self.birthday else ""
         days_to_bday_str = f", Dni do urodzin: {self.days_to_birthday()}" if self.birthday else ""
-        return f"Imię i nazwisko: {self.name.value}, " \
+        return f"ID: {self.id}, Imię i nazwisko: {self.name.value}, " \
                f"Telefony: {phones}, Email: {emails}{birthday_str}{days_to_bday_str}"
 
 class AddressBook(UserDict):
-    """Class for the address book."""
+    def __init__(self):
+        super().__init__()
+        self.next_id = 1
+        self.free_ids = set()
+
     def add_record(self, record: Record):
-        """Adds an entry to the address book."""
-        self.data[record.name.value] = record
-        print("Dodano wpis.")
+        """Adds an entry to the address book with ID management."""
+        while self.next_id in self.data or self.next_id in self.free_ids:
+            self.next_id += 1
+        if self.free_ids:
+            record.id = min(self.free_ids)
+            self.free_ids.remove(record.id)
+        else:
+            record.id = self.next_id
+            self.next_id += 1
+        self.data[record.id] = record
+        print(f"Dodano wpis z ID: {record.id}.")
+
+    def delete_record_by_id(self):
+        """Deletes a record based on ID."""
+        user_input = input("Podaj ID rekordu, który chcesz usunąć: ").strip()
+        record_id_str = user_input.replace("ID: ", "").strip()
+
+        try:
+            record_id = int(record_id_str)
+            if record_id in self.data:
+                del self.data[record_id]
+                self.free_ids.add(record_id)
+                print(f"Usunięto rekord o ID: {record_id}.")
+            else:
+                print("Nie znaleziono rekordu o podanym ID.")
+        except ValueError:
+            print("Nieprawidłowe ID. Proszę podać liczbę.")
 
     def find_record(self, search_term):
         """Finds entries containing the exact phrase provided."""
@@ -137,14 +157,39 @@ class AddressBook(UserDict):
                     break
         return found_records
 
-    def delete_record(self, name):
-        """Deletes a record by name."""
-        name = name.strip()
-        if name in self.data:
-            del self.data[name]
-            print(f"Usunięto wpis dla: {name}.")
-        else:
-            print(f"Wpis dla: {name} nie istnieje.")
+    def find_records_by_name(self, name):
+        """Finds records that match the given name and surname."""
+        matching_records = []
+        for record_id, record in self.data.items():
+            if name.lower() in record.name.value.lower():
+                matching_records.append((record_id, record))
+        return matching_records
+
+
+    def delete_record(self):
+        """Deletes the record based on the selected ID after searching by name."""
+        name_to_delete = input("Podaj imię i nazwisko osoby, którą chcesz usunąć: ")
+        matching_records = self.find_records_by_name(name_to_delete)
+
+        if not matching_records:
+            print("Nie znaleziono pasujących rekordów.")
+            return
+
+        print("Znaleziono następujące pasujące rekordy:")
+        for record_id, record in matching_records:
+            print(f"ID: {record_id}, Rekord: {record}")
+
+        try:
+            record_id_to_delete = int(input("Podaj ID rekordu, który chcesz usunąć: "))
+            if record_id_to_delete in self.data:
+                del self.data[record_id_to_delete]
+                self.free_ids.add(record_id_to_delete)  # Dodaj ID z powrotem do puli wolnych ID
+                print(f"Usunięto rekord o ID: {record_id_to_delete}.")
+            else:
+                print("Nie znaleziono rekordu o podanym ID.")
+        except ValueError:
+            print("Nieprawidłowe ID. Proszę podać liczbę.")
+
 
     def show_all_records(self):
         """Displays all entries in the address book."""
@@ -175,13 +220,13 @@ def edit_record(book):
         record = book.data[name_to_edit]
         print(f"Edytowanie: {name_to_edit}.")
 
-        # name and surname edit
+        # Name and surname edit
         new_name_input = input("Podaj imię i nazwisko (wciśnij Enter żeby zachować obecne): ")
         if new_name_input.strip():
             record.edit_name(Name(new_name_input))
             print("Zaktualizowano imię i nazwisko.")
 
-        # phone number edit
+        # Phone number edit
         if record.phones:
             print("Obecne numery telefonów: ")
             for idx, phone in enumerate(record.phones, start=1):
@@ -204,7 +249,7 @@ def edit_record(book):
         else:
             print("Brak numerów telefonu.")
 
-        # e-mail edit
+        # E-mail edit
         if record.emails:
             print("Obecne adresy e-mail: ")
             for idx, email in enumerate(record.emails, start=1):
@@ -331,8 +376,7 @@ def main():
             for record in found:
                 print(record)
         elif action in ['usuń', 'usun', 'u']:
-            name = input("Podaj imię i nazwisko do usunięcia: ")
-            book.delete_record(name)
+            book.delete_record()
         elif action in ['edytuj', 'edycja', 'e']:
             edit_record(book)
         elif action in ['pokaż wszystkie', 'pokaż', 'pokaz', 'p']:
