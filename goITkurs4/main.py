@@ -169,18 +169,18 @@ def main():
     book = AddressBook()
     while True:
         action = input("Wybierz akcję: dodaj (d), znajdź (z), usuń (u), koniec (q): ")
-        if action == "dodaj" or action == "d":
+        if action in ['dodaj', 'd']:
             record = create_record()
             book.add_record(record)
-        elif action == 'znajdź' or action == "z":
+        elif action in ['znajdź', 'znajdz', 'z']:
             search = input("Wpisz szukaną frazę: ")
             found = book.find_record(search)
             for record in found:
                 print(record)
-        elif action == 'usuń' or action == "u":
+        elif action in ['usun', 'usuń', 'u']:
             name = input("Podaj imię i nazwisko do usunięcia: ")
             book.delete_record(name)
-        elif action == 'koniec' or action == "q":
+        elif action in ['koniec', 'q']:
             break
 
 if __name__ == "__main__":
